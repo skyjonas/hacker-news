@@ -26,7 +26,7 @@
 - Next.js 应用框架
 - Cloudflare Workers 部署和运行环境
 - Edge TTS 语音合成
-- OpenAI API 内容生成
+- AI 内容生成（支持 OpenAI 和 Google Gemini）
 - Tailwind CSS 样式处理
 - shadcn-ui 组件库
 
@@ -60,9 +60,18 @@ NEXT_STATIC_HOST=http://localhost:3000/static
 WORKER_ENV=development
 HACKER_NEWS_WORKER_URL=https://you-worker-url
 HACKER_NEWS_R2_BUCKET_URL=https://your-bucket-url
-OPENAI_API_KEY=your_api_key
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4.1
+
+# AI Provider: 'openai' or 'google' (default: openai)
+AI_PROVIDER=google
+
+# Google AI (Gemini) - 使用 Google Gemini 时需要
+GOOGLE_API_KEY=your-google-api-key
+GOOGLE_MODEL=gemini-2.0-flash-exp
+
+# OpenAI - 使用 OpenAI 时需要
+# OPENAI_API_KEY=your_api_key
+# OPENAI_BASE_URL=https://api.openai.com/v1
+# OPENAI_MODEL=gpt-4o-mini
 
 ```
 
@@ -95,9 +104,17 @@ pnpm dev
 # 更新 Worker 的私有变量
 pnpx wrangler secret put --cwd worker HACKER_NEWS_WORKER_URL # 绑定域名后，修改为绑定域名
 pnpx wrangler secret put --cwd worker HACKER_NEWS_R2_BUCKET_URL
-pnpx wrangler secret put --cwd worker OPENAI_API_KEY
-pnpx wrangler secret put --cwd worker OPENAI_BASE_URL
-pnpx wrangler secret put --cwd worker OPENAI_MODEL
+
+# 使用 Google Gemini 时
+pnpx wrangler secret put --cwd worker AI_PROVIDER  # 输入: google
+pnpx wrangler secret put --cwd worker GOOGLE_API_KEY
+pnpx wrangler secret put --cwd worker GOOGLE_MODEL  # 输入: gemini-2.0-flash-exp
+
+# 使用 OpenAI 时
+# pnpx wrangler secret put --cwd worker AI_PROVIDER  # 输入: openai (或留空)
+# pnpx wrangler secret put --cwd worker OPENAI_API_KEY
+# pnpx wrangler secret put --cwd worker OPENAI_BASE_URL
+# pnpx wrangler secret put --cwd worker OPENAI_MODEL
 
 # 更新 Web 程序的私有变量
 pnpx wrangler secret put NEXTJS_ENV # Next.JS 环境，建议 production

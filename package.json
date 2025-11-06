@@ -20,6 +20,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.28",
     "@ai-sdk/openai": "^1.3.24",
     "@cloudflare/puppeteer": "^1.0.4",
     "@echristian/edge-tts": "^0.0.14",
