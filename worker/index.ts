@@ -3,6 +3,7 @@ export * from '../workflow'
 interface Env extends CloudflareEnv {
   HACKER_NEWS_WORKFLOW: Workflow
   BROWSER: Fetcher
+  HACKER_NEWS_WEB_URL?: string
 }
 
 export default {
@@ -40,7 +41,10 @@ export default {
       })
       return new Response(file?.body)
     }
-    return Response.redirect(`https://hacker-news.agi.li/${pathname}`, 302)
+
+    // Redirect to web application (configurable via HACKER_NEWS_WEB_URL)
+    const webUrl = env.HACKER_NEWS_WEB_URL || 'https://hacker-news-worker.vwanghao.workers.dev'
+    return Response.redirect(`${webUrl}${pathname}`, 302)
   },
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     return this.runWorkflow(event, env, ctx)
