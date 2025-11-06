@@ -66,7 +66,7 @@ AI_PROVIDER=google
 
 # Google AI (Gemini) - 使用 Google Gemini 时需要
 GOOGLE_API_KEY=your-google-api-key
-GOOGLE_MODEL=gemini-2.0-flash-exp
+GOOGLE_MODEL=gemini-2.5-flash
 
 # OpenAI - 使用 OpenAI 时需要
 # OPENAI_API_KEY=your_api_key
@@ -108,7 +108,7 @@ pnpx wrangler secret put --cwd worker HACKER_NEWS_R2_BUCKET_URL
 # 使用 Google Gemini 时
 pnpx wrangler secret put --cwd worker AI_PROVIDER  # 输入: google
 pnpx wrangler secret put --cwd worker GOOGLE_API_KEY
-pnpx wrangler secret put --cwd worker GOOGLE_MODEL  # 输入: gemini-2.0-flash-exp
+pnpx wrangler secret put --cwd worker GOOGLE_MODEL  # 输入: gemini-2.5-flash
 
 # 使用 OpenAI 时
 # pnpx wrangler secret put --cwd worker AI_PROVIDER  # 输入: openai (或留空)

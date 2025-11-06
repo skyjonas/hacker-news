@@ -55,7 +55,7 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
       const google = createGoogleGenerativeAI({
         apiKey: this.env.GOOGLE_API_KEY!,
       })
-      model = google(this.env.GOOGLE_MODEL || 'gemini-2.0-flash-exp')
+      model = google(this.env.GOOGLE_MODEL || 'gemini-2.5-flash')
     }
     else {
       const openai = createOpenAI({
