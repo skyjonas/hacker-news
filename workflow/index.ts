@@ -1,4 +1,5 @@
 import type { WorkflowEvent, WorkflowStep, WorkflowStepConfig } from 'cloudflare:workers'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { WorkflowEntrypoint } from 'cloudflare:workers'
@@ -12,10 +13,13 @@ interface Params {
 }
 
 interface Env extends CloudflareEnv {
-  OPENAI_BASE_URL: string
-  OPENAI_API_KEY: string
-  OPENAI_MODEL: string
+  AI_PROVIDER?: string // 'openai' | 'google', default: 'openai'
+  OPENAI_BASE_URL?: string
+  OPENAI_API_KEY?: string
+  OPENAI_MODEL?: string
   OPENAI_THINKING_MODEL?: string
+  GOOGLE_API_KEY?: string
+  GOOGLE_MODEL?: string
   OPENAI_MAX_TOKENS?: string
   JINA_KEY?: string
   WORKER_ENV?: string
@@ -42,13 +46,28 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
     const isDev = runEnv !== 'production'
     const breakTime = isDev ? '2 seconds' : '5 seconds'
     const today = event.payload?.today || new Date().toISOString().split('T')[0]
-    const openai = createOpenAI({
-      name: 'openai',
-      baseURL: this.env.OPENAI_BASE_URL!,
-      headers: {
-        Authorization: `Bearer ${this.env.OPENAI_API_KEY!}`,
-      },
-    })
+
+    // Initialize AI provider
+    const aiProvider = this.env.AI_PROVIDER || 'openai'
+    let model: any
+
+    if (aiProvider === 'google') {
+      const google = createGoogleGenerativeAI({
+        apiKey: this.env.GOOGLE_API_KEY!,
+      })
+      model = google(this.env.GOOGLE_MODEL || 'gemini-2.5-flash')
+    }
+    else {
+      const openai = createOpenAI({
+        name: 'openai',
+        baseURL: this.env.OPENAI_BASE_URL!,
+        headers: {
+          Authorization: `Bearer ${this.env.OPENAI_API_KEY!}`,
+        },
+      })
+      model = openai(this.env.OPENAI_MODEL!)
+    }
+
     const maxTokens = Number.parseInt(this.env.OPENAI_MAX_TOKENS || '4096')
 
     const stories = await step.do(`get top stories ${today}`, retryConfig, async () => {
@@ -74,7 +93,7 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       const text = await step.do(`summarize story ${story.id}: ${story.title}`, retryConfig, async () => {
         const { text, usage, finishReason } = await generateText({
-          model: openai(this.env.OPENAI_MODEL!),
+          model,
           system: summarizeStoryPrompt,
           prompt: storyResponse,
         })
@@ -106,7 +125,7 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
 
     const podcastContent = await step.do('create podcast content', retryConfig, async () => {
       const { text, usage, finishReason } = await generateText({
-        model: openai(this.env.OPENAI_THINKING_MODEL || this.env.OPENAI_MODEL!),
+        model,
         system: summarizePodcastPrompt,
         prompt: allStories.join('\n\n---\n\n'),
         maxTokens,
@@ -124,7 +143,7 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
 
     const blogContent = await step.do('create blog content', retryConfig, async () => {
       const { text, usage, finishReason } = await generateText({
-        model: openai(this.env.OPENAI_THINKING_MODEL || this.env.OPENAI_MODEL!),
+        model,
         system: summarizeBlogPrompt,
         prompt: `<stories>${JSON.stringify(stories)}</stories>\n\n---\n\n${allStories.join('\n\n---\n\n')}`,
         maxTokens,
@@ -142,7 +161,7 @@ export class HackerNewsWorkflow extends WorkflowEntrypoint<Env, Params> {
 
     const introContent = await step.do('create intro content', retryConfig, async () => {
       const { text, usage, finishReason } = await generateText({
-        model: openai(this.env.OPENAI_MODEL!),
+        model,
         system: introPrompt,
         prompt: podcastContent,
         maxRetries: 3,
